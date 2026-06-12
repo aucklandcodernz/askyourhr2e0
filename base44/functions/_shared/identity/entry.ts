@@ -1,26 +1,39 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-
 /**
- * Shared scope-derivation logic (inlined — no local imports between functions).
- * Identity comes ONLY from base44.auth.me(); never from request body or params.
+ * Shared scope-derivation helper.
+ * MUST be called with an already-initialised base44 client (createClientFromRequest).
+ * Identity comes ONLY from base44.auth.me() — never from request body or params.
  */
-async function getCallerScope(base44) {
+export async function getCallerScope(base44) {
     const caller = await base44.auth.me();
-    if (!caller) throw new Error('Unauthenticated');
-
-    if (caller.role === 'admin') {
-        return { scope_level: 'platform', role: 'owner', organization_ids: 'ALL', memberships: [] };
+    if (!caller) {
+        throw new Error('Unauthenticated');
     }
 
+    // Platform owner: built-in app role === 'admin'
+    if (caller.role === 'admin') {
+        return {
+            scope_level: 'platform',
+            role: 'owner',
+            organization_ids: 'ALL',
+            memberships: []
+        };
+    }
+
+    // Load active memberships via service role (independent of RLS)
     const memberships = await base44.asServiceRole.entities.Membership.filter({
         user_email: caller.email,
         status: 'active'
     });
 
     if (!memberships || memberships.length === 0) {
-        return { scope_level: 'org', organization_ids: [], memberships: [] };
+        return {
+            scope_level: 'org',
+            organization_ids: [],
+            memberships: []
+        };
     }
 
+    // Check for agency_admin whose org is of type "agency"
     const agencyAdminMembership = memberships.find(m => m.role === 'agency_admin');
 
     if (agencyAdminMembership) {
@@ -41,7 +54,12 @@ async function getCallerScope(base44) {
                 !a.user_email || a.user_email === caller.email
             );
 
-            const uniqueOrgIds = [...new Set([agencyId, ...reachableAssignments.map(a => a.organization_id)])];
+            const reachableOrgIds = [
+                agencyId,
+                ...reachableAssignments.map(a => a.organization_id)
+            ];
+
+            const uniqueOrgIds = [...new Set(reachableOrgIds)];
 
             return {
                 scope_level: 'agency',
@@ -53,6 +71,7 @@ async function getCallerScope(base44) {
         }
     }
 
+    // Ordinary org roles
     return {
         scope_level: 'org',
         organization_ids: memberships.map(m => m.organization_id),
@@ -63,16 +82,3 @@ async function getCallerScope(base44) {
         }))
     };
 }
-
-Deno.serve(async (req) => {
-    const base44 = createClientFromRequest(req);
-
-    let scope;
-    try {
-        scope = await getCallerScope(base44);
-    } catch {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    return Response.json(scope);
-});
