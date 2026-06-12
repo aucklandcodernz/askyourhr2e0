@@ -1,0 +1,45 @@
+{
+  "name": "Membership",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the app user this membership belongs to"
+    },
+    "organization_id": {
+      "type": "string",
+      "description": "The organization this membership grants access to"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "agency_admin",
+        "org_admin",
+        "hr_manager",
+        "payroll_admin",
+        "team_leader",
+        "employee"
+      ],
+      "description": "Role of the user within the organization"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Link to this user's Employee profile within this organization"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "revoked"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "user_email",
+    "organization_id",
+    "role"
+  ]
+}

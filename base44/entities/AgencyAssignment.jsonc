@@ -1,0 +1,31 @@
+{
+  "name": "AgencyAssignment",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string",
+      "description": "The agency organization's id"
+    },
+    "organization_id": {
+      "type": "string",
+      "description": "A client organization the agency manages"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "If set, limits this reach to a single agency staff member; if empty, applies to all agency_admin users of the agency"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "revoked"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "agency_id",
+    "organization_id"
+  ]
+}
