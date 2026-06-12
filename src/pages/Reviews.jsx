@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -20,15 +20,15 @@ export default function Reviews() {
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews'],
-    queryFn: () => base44.entities.PerformanceReview.list('-created_date', 200),
+    queryFn: () => sdList('PerformanceReview'),
   });
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PerformanceReview.create(data),
+    mutationFn: (data) => sdCreate('PerformanceReview', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reviews'] }); setShowAdd(false); setFormData({}); },
   });
 
@@ -73,6 +73,7 @@ export default function Reviews() {
           <DialogHeader><DialogTitle className="font-display">New Performance Review</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Employee *</Label><Select value={formData.employee_id || ''} onValueChange={v => update('employee_id', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Organisation</Label><Input value={formData.organization_id || ''} onChange={e => update('organization_id', e.target.value)} placeholder="Organisation ID" /></div>
             <div><Label>Review Type *</Label><Select value={formData.type || ''} onValueChange={v => update('type', v)}><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent><SelectItem value="monthly">Monthly Check-in</SelectItem><SelectItem value="quarterly">Quarterly Review</SelectItem><SelectItem value="annual">Annual Review</SelectItem><SelectItem value="probation">Probation Review</SelectItem></SelectContent></Select></div>
             <div><Label>Period</Label><Input value={formData.period || ''} onChange={e => update('period', e.target.value)} placeholder="e.g., Q1 2026" /></div>
             <div><Label>Overall Rating (1-5)</Label><Input type="number" min="1" max="5" value={formData.overall_rating || ''} onChange={e => update('overall_rating', parseInt(e.target.value))} /></div>

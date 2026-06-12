@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
-import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,12 +21,12 @@ export default function Meetings() {
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings'],
-    queryFn: () => base44.entities.Meeting.list('-created_date', 100),
+    queryFn: () => sdList('Meeting'),
   });
   const { data: orgs = [] } = useQuery({ queryKey: ['organizations'], queryFn: () => base44.entities.Organization.list() });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Meeting.create(data),
+    mutationFn: (data) => sdCreate('Meeting', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['meetings'] }); setShowAdd(false); setFormData({}); },
   });
 

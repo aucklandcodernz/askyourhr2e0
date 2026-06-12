@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -13,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
 
 export default function HazardRegister() {
   const [showAdd, setShowAdd] = useState(false);
@@ -22,12 +22,12 @@ export default function HazardRegister() {
 
   const { data: hazards = [] } = useQuery({
     queryKey: ['hazards'],
-    queryFn: () => base44.entities.HazardRegister.list('-created_date', 200),
+    queryFn: () => sdList('HazardRegister'),
   });
   const { data: orgs = [] } = useQuery({ queryKey: ['organizations'], queryFn: () => base44.entities.Organization.list() });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.HazardRegister.create(data),
+    mutationFn: (data) => sdCreate('HazardRegister', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['hazards'] }); setShowAdd(false); setFormData({}); },
   });
 

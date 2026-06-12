@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList } from '@/lib/secureDataClient';
 import { useAuth } from '@/lib/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
@@ -35,22 +36,22 @@ export default function Dashboard() {
   
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 100),
+    queryFn: () => sdList('Employee'),
   });
 
   const { data: incidents = [] } = useQuery({
     queryKey: ['incidents'],
-    queryFn: () => base44.entities.Incident.list('-created_date', 50),
+    queryFn: () => sdList('Incident'),
   });
 
   const { data: timesheets = [] } = useQuery({
     queryKey: ['timesheets'],
-    queryFn: () => base44.entities.Timesheet.list('-created_date', 50),
+    queryFn: () => sdList('Timesheet'),
   });
 
   const { data: onboardingTasks = [] } = useQuery({
     queryKey: ['onboardingTasks'],
-    queryFn: () => base44.entities.OnboardingTask.list('-created_date', 100),
+    queryFn: () => sdList('OnboardingTask'),
   });
 
   const activeEmployees = employees.filter(e => e.status === 'active').length;

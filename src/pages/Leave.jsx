@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -22,21 +23,21 @@ export default function Leave() {
 
   const { data: requests = [] } = useQuery({
     queryKey: ['leaveRequests'],
-    queryFn: () => base44.entities.LeaveRequest.list('-created_date', 200),
+    queryFn: () => sdList('LeaveRequest'),
   });
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
   const { data: orgs = [] } = useQuery({ queryKey: ['organizations'], queryFn: () => base44.entities.Organization.list() });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.LeaveRequest.create(data),
+    mutationFn: (data) => sdCreate('LeaveRequest', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }); setShowAdd(false); setFormData({}); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.LeaveRequest.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('LeaveRequest', id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }),
   });
 

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Plus, CalendarDays } from 'lucide-react';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 
 export default function Rosters() {
   const [showAdd, setShowAdd] = useState(false);
@@ -20,21 +21,17 @@ export default function Rosters() {
 
   const { data: rosters = [] } = useQuery({
     queryKey: ['rosters'],
-    queryFn: () => base44.entities.Roster.list('-created_date', 50),
+    queryFn: () => sdList('Roster'),
   });
   const { data: orgs = [] } = useQuery({ queryKey: ['organizations'], queryFn: () => base44.entities.Organization.list() });
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
-  });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Roster.create(data),
+    mutationFn: (data) => sdCreate('Roster', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['rosters'] }); setShowAdd(false); setFormData({}); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Roster.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('Roster', id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rosters'] }),
   });
 

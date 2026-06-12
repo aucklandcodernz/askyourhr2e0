@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -24,20 +24,20 @@ export default function Disciplinary() {
 
   const { data: cases = [] } = useQuery({
     queryKey: ['disciplinary'],
-    queryFn: () => base44.entities.DisciplinaryCase.list('-created_date', 200),
+    queryFn: () => sdList('DisciplinaryCase'),
   });
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.DisciplinaryCase.create(data),
+    mutationFn: (data) => sdCreate('DisciplinaryCase', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['disciplinary'] }); setShowAdd(false); setFormData({}); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.DisciplinaryCase.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('DisciplinaryCase', id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['disciplinary'] }),
   });
 
@@ -86,7 +86,7 @@ export default function Disciplinary() {
             <div><Label>Issue Type *</Label><Select value={formData.issue_type || ''} onValueChange={v => update('issue_type', v)}><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent>{Object.entries(issueLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Description *</Label><Textarea value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={4} /></div>
             <div><Label>Date Identified</Label><Input type="date" value={formData.date_identified || ''} onChange={e => update('date_identified', e.target.value)} /></div>
-            <div><Label>Organisation</Label><Input value={formData.organization_id || ''} onChange={e => update('organization_id', e.target.value)} /></div>
+            <div><Label>Organisation</Label><Input value={formData.organization_id || ''} onChange={e => update('organization_id', e.target.value)} placeholder="Organisation ID" /></div>
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button><Button onClick={() => createMutation.mutate(formData)} disabled={createMutation.isPending}>{createMutation.isPending ? 'Saving...' : 'Log Issue'}</Button></div>
           </div>
         </DialogContent>
@@ -105,7 +105,6 @@ export default function Disciplinary() {
                   {selectedCase.outcome && <StatusBadge status={selectedCase.outcome} />}
                 </div>
                 <p className="text-sm">{selectedCase.description}</p>
-
                 <Separator />
                 <h4 className="font-display font-semibold text-sm">Update Status</h4>
                 <Select value={selectedCase.status} onValueChange={v => { updateMutation.mutate({ id: selectedCase.id, data: { status: v } }); setSelectedCase(prev => ({ ...prev, status: v })); }}>
@@ -120,7 +119,6 @@ export default function Disciplinary() {
                     <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <h4 className="font-display font-semibold text-sm">Outcome</h4>
                 <Select value={selectedCase.outcome || ''} onValueChange={v => { updateMutation.mutate({ id: selectedCase.id, data: { outcome: v } }); setSelectedCase(prev => ({ ...prev, outcome: v })); }}>
                   <SelectTrigger><SelectValue placeholder="Select outcome" /></SelectTrigger>
@@ -133,7 +131,6 @@ export default function Disciplinary() {
                     <SelectItem value="training_coaching">Training/Coaching</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <Separator />
                 <h4 className="font-display font-semibold text-sm">Compliance Checklist</h4>
                 <div className="space-y-2">
@@ -156,8 +153,6 @@ export default function Disciplinary() {
                     </div>
                   ))}
                 </div>
-
-                {/* Compliance warning */}
                 {selectedCase.compliance_checklist && Object.values(selectedCase.compliance_checklist).some(v => !v) && (
                   <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-amber-600" />

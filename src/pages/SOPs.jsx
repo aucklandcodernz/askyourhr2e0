@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -21,12 +22,12 @@ export default function SOPs() {
 
   const { data: sops = [] } = useQuery({
     queryKey: ['sops'],
-    queryFn: () => base44.entities.SOPDocument.list('-created_date', 200),
+    queryFn: () => sdList('SOPDocument'),
   });
   const { data: orgs = [] } = useQuery({ queryKey: ['organizations'], queryFn: () => base44.entities.Organization.list() });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.SOPDocument.create(data),
+    mutationFn: (data) => sdCreate('SOPDocument', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['sops'] }); setShowAdd(false); setFormData({}); },
   });
 

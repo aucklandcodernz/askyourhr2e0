@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -22,21 +22,16 @@ export default function Goals() {
 
   const { data: goals = [] } = useQuery({
     queryKey: ['goals'],
-    queryFn: () => base44.entities.PerformanceGoal.list('-created_date', 200),
+    queryFn: () => sdList('PerformanceGoal'),
   });
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PerformanceGoal.create(data),
+    mutationFn: (data) => sdCreate('PerformanceGoal', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['goals'] }); setShowAdd(false); setFormData({}); },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PerformanceGoal.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),
   });
 
   const update = (f, v) => setFormData(p => ({ ...p, [f]: v }));
@@ -78,6 +73,7 @@ export default function Goals() {
           <DialogHeader><DialogTitle className="font-display">Add Goal</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Employee *</Label><Select value={formData.employee_id || ''} onValueChange={v => update('employee_id', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Organisation</Label><Input value={formData.organization_id || ''} onChange={e => update('organization_id', e.target.value)} placeholder="Organisation ID" /></div>
             <div><Label>Title *</Label><Input value={formData.title || ''} onChange={e => update('title', e.target.value)} /></div>
             <div><Label>Description</Label><Textarea value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={3} /></div>
             <div><Label>Type</Label><Select value={formData.type || ''} onValueChange={v => update('type', v)}><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent><SelectItem value="kpi">KPI</SelectItem><SelectItem value="goal">Goal</SelectItem><SelectItem value="development">Development</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select></div>

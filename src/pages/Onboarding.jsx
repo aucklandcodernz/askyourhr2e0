@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Plus, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { Plus, ClipboardList } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
 const DEFAULT_EMPLOYEE_TASKS = [
@@ -38,26 +37,30 @@ export default function Onboarding() {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['onboardingTasks'],
-    queryFn: () => base44.entities.OnboardingTask.list('-created_date', 200),
+    queryFn: () => sdList('OnboardingTask'),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.OnboardingTask.bulkCreate(data),
+    mutationFn: async (allTasks) => {
+      for (const task of allTasks) {
+        await sdCreate('OnboardingTask', task);
+      }
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['onboardingTasks'] }); setShowGenerate(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.OnboardingTask.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('OnboardingTask', id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['onboardingTasks'] }),
   });
 
   const onboardingEmployees = employees.filter(e => e.status === 'onboarding');
-  
+
   const getEmployeeName = (id) => {
     const emp = employees.find(e => e.id === id);
     return emp ? `${emp.first_name} ${emp.last_name}` : 'Unknown';
@@ -110,7 +113,6 @@ export default function Onboarding() {
             const completed = empTasks.filter(t => t.status === 'completed').length;
             const total = empTasks.length;
             const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-
             return (
               <Card key={empId}>
                 <CardHeader className="pb-3">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -9,9 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, Users, UserCircle, Mail, Phone, Calendar, Building2 } from 'lucide-react';
+import { Plus, Search, Users, Mail, Building2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeDetail from '@/components/employees/EmployeeDetail';
@@ -25,7 +24,7 @@ export default function Employees() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const { data: orgs = [] } = useQuery({
@@ -34,7 +33,7 @@ export default function Employees() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.create(data),
+    mutationFn: (data) => sdCreate('Employee', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAdd(false);
@@ -42,7 +41,7 @@ export default function Employees() {
   });
 
   const filtered = employees.filter(e => {
-    const matchesSearch = !search || 
+    const matchesSearch = !search ||
       `${e.first_name} ${e.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
       e.email?.toLowerCase().includes(search.toLowerCase()) ||
       e.position?.toLowerCase().includes(search.toLowerCase());
@@ -64,7 +63,6 @@ export default function Employees() {
         actions={<Button onClick={() => setShowAdd(true)}><Plus className="w-4 h-4 mr-2" />Add Employee</Button>}
       />
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -85,14 +83,13 @@ export default function Employees() {
         </Select>
       </div>
 
-      {/* Employee Grid */}
       {filtered.length === 0 ? (
         <EmptyState icon={Users} title="No employees found" description="Add your first employee to get started." action="Add Employee" onAction={() => setShowAdd(true)} />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(emp => (
-            <Card 
-              key={emp.id} 
+            <Card
+              key={emp.id}
               className="p-5 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/30"
               onClick={() => setSelectedEmployee(emp)}
             >
@@ -133,7 +130,6 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Add Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

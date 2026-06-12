@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -21,15 +21,15 @@ export default function Training() {
 
   const { data: training = [] } = useQuery({
     queryKey: ['training'],
-    queryFn: () => base44.entities.Training.list('-created_date', 200),
+    queryFn: () => sdList('Training'),
   });
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Training.create(data),
+    mutationFn: (data) => sdCreate('Training', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['training'] }); setShowAdd(false); setFormData({}); },
   });
 
@@ -85,6 +85,7 @@ export default function Training() {
           <DialogHeader><DialogTitle className="font-display">Assign Training</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Employee *</Label><Select value={formData.employee_id || ''} onValueChange={v => update('employee_id', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label>Organisation</Label><Input value={formData.organization_id || ''} onChange={e => update('organization_id', e.target.value)} placeholder="Organisation ID" /></div>
             <div><Label>Title *</Label><Input value={formData.title || ''} onChange={e => update('title', e.target.value)} /></div>
             <div><Label>Type</Label><Select value={formData.type || ''} onValueChange={v => update('type', v)}><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent><SelectItem value="course">Course</SelectItem><SelectItem value="sop_review">SOP Review</SelectItem><SelectItem value="compliance">Compliance</SelectItem><SelectItem value="certification">Certification</SelectItem><SelectItem value="induction">Induction</SelectItem><SelectItem value="hs_training">H&S Training</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select></div>
             <div><Label>Due Date</Label><Input type="date" value={formData.due_date || ''} onChange={e => update('due_date', e.target.value)} /></div>

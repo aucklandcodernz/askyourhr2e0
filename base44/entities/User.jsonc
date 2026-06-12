@@ -14,18 +14,6 @@
         "employee"
       ],
       "default": "employee"
-    },
-    "organization_id": {
-      "type": "string",
-      "description": "The organization this user belongs to"
-    },
-    "employee_id": {
-      "type": "string",
-      "description": "Link to employee profile"
-    },
-    "agency_id": {
-      "type": "string",
-      "description": "For agency users, the agency org ID"
     }
   }
 }

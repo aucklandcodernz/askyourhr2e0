@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,7 @@ export default function RiskRegister() {
 
   const { data: risks = [] } = useQuery({
     queryKey: ['risks'],
-    queryFn: () => base44.entities.RiskRegister.list('-created_date', 200),
+    queryFn: () => sdList('RiskRegister'),
   });
 
   const { data: orgs = [] } = useQuery({
@@ -31,7 +32,7 @@ export default function RiskRegister() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.RiskRegister.create(data),
+    mutationFn: (data) => sdCreate('RiskRegister', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['risks'] }); setShowAdd(false); setFormData({}); },
   });
 

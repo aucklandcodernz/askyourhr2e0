@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Plus, AlertTriangle, Search, Shield, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, AlertTriangle, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -29,7 +29,7 @@ export default function Incidents() {
 
   const { data: incidents = [] } = useQuery({
     queryKey: ['incidents'],
-    queryFn: () => base44.entities.Incident.list('-created_date', 200),
+    queryFn: () => sdList('Incident'),
   });
 
   const { data: orgs = [] } = useQuery({
@@ -38,12 +38,12 @@ export default function Incidents() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Incident.create(data),
+    mutationFn: (data) => sdCreate('Incident', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['incidents'] }); setShowAdd(false); setFormData({}); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Incident.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('Incident', id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['incidents'] }); setSelectedIncident(null); },
   });
 
@@ -90,8 +90,8 @@ export default function Incidents() {
       ) : (
         <div className="space-y-3">
           {filtered.map(inc => (
-            <Card 
-              key={inc.id} 
+            <Card
+              key={inc.id}
               className={`border-l-4 ${severityBg[inc.severity] || 'border-l-slate-300'} cursor-pointer hover:shadow-md transition-all`}
               onClick={() => setSelectedIncident(inc)}
             >
@@ -153,7 +153,6 @@ export default function Incidents() {
               <div><Label>People Involved</Label><Input value={formData.people_involved || ''} onChange={e => updateForm('people_involved', e.target.value)} /></div>
               <div><Label>Witnesses</Label><Input value={formData.witnesses || ''} onChange={e => updateForm('witnesses', e.target.value)} /></div>
             </div>
-
             <Separator />
             <h3 className="font-display font-semibold text-sm">Risk Assessment</h3>
             <div className="grid grid-cols-2 gap-4">
@@ -196,7 +195,6 @@ export default function Incidents() {
                 <Switch checked={formData.notifiable_event || false} onCheckedChange={v => updateForm('notifiable_event', v)} />
               </div>
             </div>
-
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
               <Button onClick={() => createMutation.mutate(formData)} disabled={createMutation.isPending}>
@@ -226,21 +224,19 @@ export default function Incidents() {
                   <div><span className="text-muted-foreground">People involved:</span> {selectedIncident.people_involved || 'N/A'}</div>
                   <div><span className="text-muted-foreground">Witnesses:</span> {selectedIncident.witnesses || 'N/A'}</div>
                 </div>
-
                 {selectedIncident.notifiable_event && (
                   <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                     <p className="text-sm font-medium text-red-800">⚠️ This may be a notifiable event under NZ HSWA</p>
                     <p className="text-xs text-red-600 mt-1">WorkSafe NZ may need to be notified. Review legal requirements.</p>
                     <div className="flex items-center gap-3 mt-2">
                       <Label className="text-xs text-red-700">WorkSafe Notified?</Label>
-                      <Switch 
-                        checked={selectedIncident.worksafe_notified || false} 
+                      <Switch
+                        checked={selectedIncident.worksafe_notified || false}
                         onCheckedChange={v => updateMutation.mutate({ id: selectedIncident.id, data: { worksafe_notified: v, worksafe_notification_date: v ? new Date().toISOString().split('T')[0] : null } })}
                       />
                     </div>
                   </div>
                 )}
-
                 <Separator />
                 <div>
                   <Label>Update Status</Label>
@@ -257,8 +253,8 @@ export default function Incidents() {
                 </div>
                 <div>
                   <Label>Investigation Notes</Label>
-                  <Textarea 
-                    value={selectedIncident.investigation_notes || ''} 
+                  <Textarea
+                    value={selectedIncident.investigation_notes || ''}
                     onChange={e => updateMutation.mutate({ id: selectedIncident.id, data: { investigation_notes: e.target.value } })}
                     rows={3}
                   />

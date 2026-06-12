@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sdList, sdCreate, sdUpdate } from '@/lib/secureDataClient';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Clock, Search, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { format, addDays, startOfWeek } from 'date-fns';
 
 export default function Timesheets() {
   const [showAdd, setShowAdd] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedTs, setSelectedTs] = useState(null);
+  const [newTs, setNewTs] = useState({});
   const queryClient = useQueryClient();
 
   const { data: timesheets = [] } = useQuery({
     queryKey: ['timesheets'],
-    queryFn: () => base44.entities.Timesheet.list('-created_date', 200),
+    queryFn: () => sdList('Timesheet'),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date', 200),
+    queryFn: () => sdList('Employee'),
   });
 
   const { data: orgs = [] } = useQuery({
@@ -38,16 +38,14 @@ export default function Timesheets() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Timesheet.create(data),
+    mutationFn: (data) => sdCreate('Timesheet', data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['timesheets'] }); setShowAdd(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Timesheet.update(id, data),
+    mutationFn: ({ id, data }) => sdUpdate('Timesheet', id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['timesheets'] }); },
   });
-
-  const [newTs, setNewTs] = useState({});
 
   const filtered = timesheets.filter(t => statusFilter === 'all' || t.status === statusFilter);
 
@@ -75,8 +73,8 @@ export default function Timesheets() {
     updateMutation.mutate({ id: ts.id, data: { status: 'approved', review_date: new Date().toISOString() } });
   };
 
-  const handleReject = (ts, comments) => {
-    updateMutation.mutate({ id: ts.id, data: { status: 'rejected', review_comments: comments, review_date: new Date().toISOString() } });
+  const handleReject = (ts) => {
+    updateMutation.mutate({ id: ts.id, data: { status: 'rejected', review_comments: 'Needs revision', review_date: new Date().toISOString() } });
   };
 
   return (
@@ -154,31 +152,21 @@ export default function Timesheets() {
               <div><Label>Period Start</Label><Input type="date" value={newTs.period_start || ''} onChange={e => setNewTs(p => ({ ...p, period_start: e.target.value }))} /></div>
               <div><Label>Period End</Label><Input type="date" value={newTs.period_end || ''} onChange={e => setNewTs(p => ({ ...p, period_end: e.target.value }))} /></div>
             </div>
-
             <Separator />
             <h3 className="font-display font-semibold text-sm">Daily Entries</h3>
             <div className="space-y-2">
               {(newTs.entries || []).map((entry, i) => (
                 <div key={i} className="grid grid-cols-5 gap-2 items-end p-2 bg-muted/50 rounded-lg">
                   <div>
-                    <Label className="text-[10px]">{entry.date ? format(new Date(entry.date), 'EEE d MMM') : `Day ${i+1}`}</Label>
+                    <Label className="text-[10px]">{entry.date ? format(new Date(entry.date), 'EEE d MMM') : `Day ${i + 1}`}</Label>
                   </div>
-                  <div><Input type="time" value={entry.start_time} onChange={e => {
-                    const entries = [...newTs.entries]; entries[i].start_time = e.target.value; setNewTs(p => ({ ...p, entries }));
-                  }} placeholder="Start" className="h-8 text-xs" /></div>
-                  <div><Input type="time" value={entry.end_time} onChange={e => {
-                    const entries = [...newTs.entries]; entries[i].end_time = e.target.value; setNewTs(p => ({ ...p, entries }));
-                  }} placeholder="End" className="h-8 text-xs" /></div>
-                  <div><Input type="number" value={entry.break_minutes} onChange={e => {
-                    const entries = [...newTs.entries]; entries[i].break_minutes = parseInt(e.target.value) || 0; setNewTs(p => ({ ...p, entries }));
-                  }} placeholder="Break (min)" className="h-8 text-xs" /></div>
-                  <div><Input type="number" step="0.25" value={entry.total_hours} onChange={e => {
-                    const entries = [...newTs.entries]; entries[i].total_hours = parseFloat(e.target.value) || 0; setNewTs(p => ({ ...p, entries }));
-                  }} placeholder="Hours" className="h-8 text-xs" /></div>
+                  <div><Input type="time" value={entry.start_time} onChange={e => { const entries = [...newTs.entries]; entries[i].start_time = e.target.value; setNewTs(p => ({ ...p, entries })); }} placeholder="Start" className="h-8 text-xs" /></div>
+                  <div><Input type="time" value={entry.end_time} onChange={e => { const entries = [...newTs.entries]; entries[i].end_time = e.target.value; setNewTs(p => ({ ...p, entries })); }} placeholder="End" className="h-8 text-xs" /></div>
+                  <div><Input type="number" value={entry.break_minutes} onChange={e => { const entries = [...newTs.entries]; entries[i].break_minutes = parseInt(e.target.value) || 0; setNewTs(p => ({ ...p, entries })); }} placeholder="Break (min)" className="h-8 text-xs" /></div>
+                  <div><Input type="number" step="0.25" value={entry.total_hours} onChange={e => { const entries = [...newTs.entries]; entries[i].total_hours = parseFloat(e.target.value) || 0; setNewTs(p => ({ ...p, entries })); }} placeholder="Hours" className="h-8 text-xs" /></div>
                 </div>
               ))}
             </div>
-
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
               <Button onClick={() => handleSubmitTimesheet(newTs)} disabled={createMutation.isPending}>
@@ -205,7 +193,6 @@ export default function Timesheets() {
                   <div><span className="text-muted-foreground">Total Hours:</span> <strong>{selectedTs.total_hours || 0}h</strong></div>
                   <div><span className="text-muted-foreground">Overtime:</span> <strong>{selectedTs.overtime_hours || 0}h</strong></div>
                 </div>
-                
                 {selectedTs.employee_declaration && (
                   <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                     <p className="text-xs text-emerald-800 font-medium">✓ Employee declaration confirmed</p>
@@ -213,18 +200,16 @@ export default function Timesheets() {
                     {selectedTs.declaration_timestamp && <p className="text-[10px] text-emerald-600 mt-0.5">Declared: {format(new Date(selectedTs.declaration_timestamp), 'd MMM yyyy HH:mm')}</p>}
                   </div>
                 )}
-
                 {selectedTs.status === 'submitted' && (
                   <div className="flex gap-2">
                     <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => { handleApprove(selectedTs); setSelectedTs(null); }}>
                       <CheckCircle2 className="w-4 h-4 mr-1" />Approve
                     </Button>
-                    <Button variant="destructive" className="flex-1" onClick={() => { handleReject(selectedTs, 'Needs revision'); setSelectedTs(null); }}>
+                    <Button variant="destructive" className="flex-1" onClick={() => { handleReject(selectedTs); setSelectedTs(null); }}>
                       <XCircle className="w-4 h-4 mr-1" />Reject
                     </Button>
                   </div>
                 )}
-
                 {selectedTs.review_comments && (
                   <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
                     <p className="text-xs font-medium text-amber-800">Review Comments:</p>
