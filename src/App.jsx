@@ -31,6 +31,7 @@ import Reviews from '@/pages/Reviews';
 import Training from '@/pages/Training';
 import Disciplinary from '@/pages/Disciplinary';
 import Organisations from '@/pages/Organisations';
+import Members from '@/pages/Members';
 import Documents from '@/pages/Documents';
 
 const AuthenticatedApp = () => {
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
           <Route path="/training" element={<Training />} />
           <Route path="/disciplinary" element={<Disciplinary />} />
           <Route path="/organisations" element={<Organisations />} />
+          <Route path="/members" element={<Members />} />
           <Route path="/documents" element={<Documents />} />
         </Route>
       </Route>

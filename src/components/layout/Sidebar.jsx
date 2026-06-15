@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Clock, Shield, Target, FileText,
   Building2, ChevronDown, ChevronRight, AlertTriangle,
   ClipboardList, CalendarDays, BookOpen, GraduationCap,
-  Scale, Menu, X, LogOut, UserCircle
+  Scale, Menu, X, LogOut, UserCircle, UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
@@ -54,6 +54,7 @@ const navSections = [
     title: 'Admin',
     items: [
       { label: 'Organisations', icon: Building2, path: '/organisations' },
+      { label: 'Members', icon: UserCog, path: '/members' },
       { label: 'Documents', icon: FileText, path: '/documents' },
     ]
   }
