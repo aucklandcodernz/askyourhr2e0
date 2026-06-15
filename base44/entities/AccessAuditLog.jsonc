@@ -1,0 +1,51 @@
+{
+  "name": "AccessAuditLog",
+  "type": "object",
+  "properties": {
+    "actor_email": {
+      "type": "string",
+      "description": "Email of the user who performed the action (from base44.auth.me(), never the request body)"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "change_role",
+        "revoke"
+      ],
+      "description": "The access change that was performed"
+    },
+    "target_email": {
+      "type": "string",
+      "description": "The user_email of the membership that was affected"
+    },
+    "organization_id": {
+      "type": "string",
+      "description": "The organization the affected membership belongs to"
+    },
+    "old_role": {
+      "type": "string",
+      "description": "The membership's role before the change (change_role / revoke)"
+    },
+    "new_role": {
+      "type": "string",
+      "description": "The membership's role after the change (grant / change_role)"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional human-readable note about the action"
+    }
+  },
+  "required": [
+    "actor_email",
+    "action",
+    "target_email",
+    "organization_id"
+  ],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}
